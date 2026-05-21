@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Học liệu Tương tác: Bài 21 - Điều kiện Cân bằng tổng quát của Vật rắn</title>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuedraggable@4.1.0/dist/vuedraggable.umd.min.js"></script>
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            startup: { typeset: false } 
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        .animate-fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        [v-cloak] { display: none; }
+    </style>
+</head>
+
+<body class="bg-purple-50 p-4 md:p-8 font-sans min-h-screen text-gray-800">
+    <div id="app" v-cloak class="max-w-6xl mx-auto bg-white rounded-xl shadow-xl overflow-hidden p-6 md:p-8 border border-purple-100">
+        
+        <h1 class="text-3xl font-extrabold text-center text-purple-700 mb-2 uppercase tracking-wide">
+            BÀI 21: ĐIỀU KIỆN CÂN BẰNG TỔNG QUÁT CỦA VẬT RẮN
+        </h1>
+        <p class="text-center text-gray-500 mb-8 font-medium">Vật lí 10 - Chương IV: Mở đầu về động lực học vật rắn</p>
+
+        <div class="flex flex-wrap border-b-2 border-purple-200 mb-6 gap-1 bg-purple-50/50 rounded-t-lg">
+            <button v-for="tab in tabs" :key="tab.id" @click="switchTab(tab.id)"
+                :class="['px-6 py-4 font-bold text-lg transition-all duration-300', 
+                         currentTab === tab.id ? 'bg-purple-600 text-white shadow-md' : 'text-gray-600 hover:bg-purple-100 hover:text-purple-800']">
+                {{ tab.name }}
+            </button>
+        </div>
+
+        <div class="min-h-[500px]">
+
+            <div v-show="currentTab === 'tab1'" class="animate-fade-in">
+                <h2 class="text-2xl font-bold mb-4 text-purple-800 border-l-4 border-purple-600 pl-3">Thử thách Phân tích Hệ véc-tơ lực tĩnh phẳng tựa tường</h2>
+                <p class="mb-6 text-gray-700 text-lg">Yêu cầu cần đạt cốt lõi là nhận diện đúng điểm đặt và đặc điểm hình học phương chiều của hệ lực phẳng tác dụng lên thanh cứng dựng nghiêng. Hãy kéo các thẻ mô tả lực ở cột phải thả vào đúng vùng hình học cơ học tương ứng ở cột trái.</p>
+                
+                <div class="flex flex-col md:flex-row gap-8">
+                    <div class="w-full md:w-1/2 flex flex-col gap-5">
+                        <h3 class="font-bold text-xl border-b-2 border-purple-200 pb-2 text-purple-600">Các vùng vị trí hình học trên thanh</h3>
+                        <div v-for="zone in conceptZones" :key="zone.id" 
+                             class="p-4 rounded-xl border-2 transition-colors duration-300 bg-slate-50"
+                             :class="getZoneColor(zone)">
+                            <div class="font-bold mb-3 text-base text-gray-800" v-html="zone.title"></div>
+                            <draggable v-model="zone.items" group="physics21ladder" item-key="id" @end="triggerMathJax"
+                                class="min-h-[90px] bg-white rounded-lg border-dashed border-2 border-gray-400 p-2 flex flex-col gap-2 justify-center shadow-inner">
+                                <template #item="{element}">
+                                    <div class="p-3 bg-white shadow-md rounded border border-purple-200 cursor-grab active:cursor-grabbing text-left font-medium text-purple-950 animate-fade-in">
+                                        {{ element.text }}
+                                    </div>
+                                </template>
+                            </draggable>
+                        </div>
+                    </div>
+
+                    <div class="w-full md:w-1/2 flex flex-col gap-5">
+                        <h3 class="font-bold text-xl border-b-2 border-amber-200 pb-2 text-amber-600">Ngân hàng đặc điểm véc-tơ lực (Xáo trộn)</h3>
+                        <div class="bg-amber-50 p-6 rounded-xl min-h-[350px] border border-amber-200 shadow-inner">
+                            <draggable v-model="formulaBank" group="physics21ladder" item-key="id" @end="triggerMathJax"
+                                class="flex flex-col gap-4 min-h-[250px]">
+                                <template #item="{element}">
+                                    <div class="p-4 bg-white shadow-md rounded-lg border-l-4 border-amber-500 cursor-grab active:cursor-grabbing hover:bg-amber-100 font-medium text-base transition-colors">
+                                        {{ element.text }}
+                                    </div>
+                                </template>
+                            </draggable>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div v-show="currentTab === 'tab2'" class="animate-fade-in text-lg text-gray-800 leading-relaxed space-y-6">
+                <h2 class="text-2xl font-bold text-purple-800 border-l-4 border-purple-600 pl-3">Khung lý thuyết Điều kiện cân bằng tổng quát</h2>
+                
+                <div class="bg-purple-50 p-5 rounded-lg border border-purple-200">
+                    <h3 class="text-xl font-bold text-purple-700 mb-2">1. Định luật hai Điều kiện cân bằng hệ vật rắn</h3>
+                    <p class="mb-3">Một vật rắn tự do hoàn toàn muốn duy trì trạng thái cân bằng tĩnh học đứng yên vững vàng trong không gian, bắt buộc phải thỏa mãn đồng thời hai điều kiện độc lập:</p>
+                    <ul class="list-disc pl-6 space-y-2 font-medium text-slate-700 mb-3">
+                        <li><span class="text-purple-900 font-bold">Điều kiện 1 (Chống tịnh tiến):</span> Hợp lực tổng của tất cả các ngoại lực tác dụng lên vật phải triệt tiêu bằng không: $$\sum \vec{F} = \vec{0} \Rightarrow \vec{P} + \vec{N}_1 + \vec{N}_2 + \vec{F}_{msn} = \vec{0}$$</li>
+                        <li><span class="text-purple-900 font-bold">Điều kiện 2 (Chống chuyển động quay):</span> Tổng các moment lực tác dụng lên vật đối với một điểm bất kỳ chọn làm tâm trục quay phải triệt tiêu bằng không: $$\sum M = 0$$</li>
+                    </ul>
+                </div>
+
+                <div class="bg-indigo-50 p-5 rounded-lg border border-indigo-200">
+                    <h3 class="text-xl font-bold text-indigo-700 mb-2">2. Mô hình phân tích thực tế: Thanh cứng dựng nghiêng tựa tường</h3>
+                    <p class="mb-2">Khảo sát một thanh đồng chất khối lượng $m$, dài $L$, đặt nghiêng góc $\alpha$ tựa vào tường nhẵn thẳng đứng và đặt chân lên mặt sàn nằm ngang thô nhám. Chiếu hệ lực lên hai trục tọa độ thẳng đứng và sàn ngang tĩnh học:</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-3">
+                        <div class="bg-white p-4 rounded shadow-sm text-center font-medium border border-indigo-100">
+                            <p class="text-sm font-bold text-indigo-800 mb-1">Cân bằng lực tịnh tiến phẳng:</p>
+                            $$ \text{Trục thẳng đứng: } N_2 = P = m \cdot g $$
+                            $$ \text{Trục nằm ngang: } N_1 = F_{msn} $$
+                        </div>
+                        <div class="bg-white p-4 rounded shadow-sm text-center font-medium border border-indigo-100">
+                            <p class="text-sm font-bold text-indigo-800 mb-1">Cân bằng Moment lực (Chọn chân thanh làm trục):</p>
+                            $$ M_P = M_{N1} \Rightarrow P \cdot \frac{L}{2} \cdot \cos\alpha = N_1 \cdot L \cdot \sin\alpha $$
+                            $$ \Rightarrow Lực ma sát cần ghim chân: F_{msn} = N_1 = \frac{m \cdot g}{2 \cdot \tan\alpha} $$
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div v-show="currentTab === 'tab3'" class="animate-fade-in">
+                <h2 class="text-2xl font-bold mb-2 text-purple-800 border-l-4 border-purple-600 pl-3">Khảo sát Ngưỡng ma sát giới hạn chống trượt đổ thanh cứng</h2>
+                <p class="mb-6 text-gray-700 text-lg">Mô phỏng động lực học bẫy đổ sụp. Hãy thay đổi Khối lượng thanh $m$ và Hệ số ma sát mặt sàn $\mu$ qua thanh trượt. Đồ thị sẽ hiển thị đồng thời đường ma sát tối đa sàn cấp (màu đỏ) và đường ma sát thực tế cần (màu tím) khi góc nghiêng $\alpha$ hạ thấp dần từ $75^\circ$ về $15^\circ$. Khi đường màu tím vượt lên trên đường màu đỏ, chiếc thang sẽ trượt chân ngã sụp ngay lập tức!</p>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-1 bg-slate-50 p-6 rounded-xl border border-slate-300 shadow-sm flex flex-col justify-center gap-6">
+                        <h3 class="font-bold text-xl text-gray-800 border-b pb-2">Thông số thí nghiệm tĩnh</h3>
+                        
+                        <div>
+                            <label class="flex justify-between font-bold text-base mb-2 text-purple-700">
+                                <span>Khối lượng thanh ($m$)</span>
+                                <span>{{ m_ladder }} kg</span>
+                            </label>
+                            <input type="range" v-model.number="m_ladder" @input="updateChartRealtime" min="10" max="50" step="5" class="w-full h-3 bg-purple-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+
+                        <div>
+                            <label class="flex justify-between font-bold text-base mb-2 text-red-600">
+                                <span>Hệ số ma sát sàn ($\mu$)</span>
+                                <span>{{ mu_friction.toFixed(2) }}</span>
+                            </label>
+                            <input type="range" v-model.number="mu_friction" @input="updateChartRealtime" min="0.20" max="0.60" step="0.05" class="w-full h-3 bg-red-200 rounded-lg appearance-none cursor-pointer">
+                        </div>
+
+                        <div class="bg-purple-100 p-4 rounded-lg border border-purple-300 shadow-inner space-y-2 text-slate-900 font-medium text-sm">
+                            <p class="text-xs font-bold text-purple-800 text-center border-b border-purple-200 pb-1">Trạng thái giới hạn an toàn chân thanh:</p>
+                            <div class="flex justify-between">
+                                <span>Phản lực sàn thẳng đứng $N_2$:</span>
+                                <span class="font-bold text-slate-900">{{ m_ladder * g_gravity }} N</span>
+                            </div>
+                            <div class="flex justify-between text-red-800">
+                                <span>Ngưỡng ma sát nghỉ cực đại $F_{msn}^{\max}$:</span>
+                                <span class="font-bold">{{ (mu_friction * m_ladder * g_gravity).toFixed(1) }} N</span>
+                            </div>
+                            <div class="flex justify-between text-indigo-900 font-bold pt-1 border-t border-dashed border-purple-300 text-base">
+                                <span>Góc nghiêng tối thiểu $\alpha_{\min}$:</span>
+                                <span>{{ (Math.atan(1 / (2 * mu_friction)) * 180 / Math.PI).toFixed(1) }}°</span>
+                            </div>
+                            <p class="text-xs text-red-600 italic font-medium pt-1">*Biện chứng: Khi chân thanh càng kéo dài ra xa góc tường (góc nghiêng $\alpha$ tụt xuống dưới ngưỡng $\alpha_{\min}$), moment trọng lực bẻ gãy ma sát chân, gây hiện tượng trượt đổ tự do.*</p>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-2 bg-white p-4 rounded-xl border border-gray-200 shadow-md">
+                        <div class="relative w-full h-[410px]">
+                            <canvas id="ladderBalanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div v-show="currentTab === 'tab4'" class="animate-fade-in">
+                <h2 class="text-2xl font-bold mb-4 text-purple-800 border-l-4 border-purple-600 pl-3">Trắc nghiệm tư duy Tĩnh học phẳng hệ lực vật rắn</h2>
+                <p class="mb-6 text-gray-700 text-lg">Hệ thống gồm 4 câu hỏi quét đủ các mức độ nhận thức bám sát ma trận yêu cầu cần đạt 15. Phản hồi biện chứng bóc tách triệt để lỗi ngộ nhận chọn tâm trục và áp dụng sai lệch hệ phương trình tĩnh lượng.</p>
+                
+                <div class="flex flex-col gap-8">
+                    <div v-for="(q, qIndex) in quizData" :key="q.id" class="bg-white p-6 rounded-xl border shadow-sm border-gray-200">
+                        <span class="inline-block px-4 py-1 bg-purple-100 text-purple-800 text-sm font-bold rounded-full mb-3 shadow-sm">
+                            Mức độ: {{ q.level }}
+                        </span>
+                        
+                        <p class="text-xl font-bold mb-4 text-gray-800 leading-snug" v-html="q.question"></p>
+                        
+                        <div v-if="q.type === 'choice'" class="flex flex-col gap-3">
+                            <div v-for="option in q.options" :key="option.id"
+                                 @click="selectOption(q, option)"
+                                 :class="['p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 text-lg', getOptionClass(q, option)]">
+                                <span class="font-bold mr-3 bg-white px-2 py-1 rounded shadow-sm">{{ option.id }}</span> 
+                                <span v-html="option.text"></span>
+                            </div>
+                            
+                            <div v-if="q.selectedOption" 
+                                 :class="['mt-4 p-5 rounded-lg border-l-4 animate-fade-in text-lg shadow-inner', 
+                                          q.selectedOption.isCorrect ? 'bg-green-50 border-green-500 text-green-900' : 'bg-orange-50 border-orange-500 text-orange-900']">
+                                <p class="font-bold mb-1">{{ q.selectedOption.isCorrect ? '🎉 Tuyệt vời!' : '💡 Phân tích lỗi ngộ nhận bẫy tư duy:' }}</p>
+                                <p v-html="q.selectedOption.feedback"></p>
+                            </div>
+                        </div>
+
+                        <div v-if="q.type === 'input'" class="flex flex-col gap-4">
+                            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-slate-50 p-5 rounded-lg border border-gray-200">
+                                <label class="font-bold text-gray-700 text-lg">Nhập đáp án số học:</label>
+                                <input type="text" v-model="q.studentAnswer" placeholder="Ví dụ: 45,0" 
+                                       class="p-3 border-2 border-gray-400 rounded-lg text-lg w-full sm:w-64 focus:outline-none focus:border-purple-500 font-bold text-center tracking-wider shadow-sm">
+                                <button @click="checkInput(q)" class="px-8 py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition-colors text-lg shadow-md w-full sm:w-auto">
+                                    Nộp bài chấm điểm
+                                </button>
+                            </div>
+                            
+                            <div v-if="q.isAnswered" 
+                                 :class="['mt-2 p-5 rounded-lg border-l-4 animate-fade-in text-lg shadow-inner', 
+                                          q.isCorrect ? 'bg-green-50 border-green-500 text-green-900' : 'bg-orange-50 border-orange-500 text-orange-900']">
+                                <p class="font-bold mb-1">{{ q.isCorrect ? '🎉 Chúc mừng bạn làm bài hoàn hảo!' : '💡 Hướng dẫn lập luận vật lý:' }}</p>
+                                <p v-html="q.isCorrect ? q.feedbackSuccess : q.feedbackError"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    tabs: [
+                        { id: 'tab1', name: '1. Khởi động' },
+                        { id: 'tab2', name: '2. Lý thuyết cốt lõi' },
+                        { id: 'tab3', name: '3. Mô phỏng Giới hạn Trượt' },
+                        { id: 'tab4', name: '4. Đánh giá Năng lực' }
+                    ],
+                    currentTab: 'tab1',
+
+                    // Khai báo cấu trúc mảng logic Kéo - Thả phân loại Tab 1
+                    conceptZones: [
+                        { id: 'dau_tren_tuong', title: 'Vùng đầu trên của thanh (Tiếp xúc bức tường thẳng đứng nhẵn bóng)', items: [] },
+                        { id: 'dau_duoi_san', title: 'Vùng đầu dưới của thanh (Tiếp xúc sàn nhà nằm ngang thô nhám)', items: [] },
+                        { id: 'trong_tam_thanh', title: 'Vùng trọng tâm cơ học ở chính giữa thanh phẳng đồng chất', items: [] }
+                    ],
+                    formulaBank: [
+                        { id: 'force_n1', text: 'Véc-tơ phản lực pháp tuyến N1: Có phương nằm ngang vuông góc với thành tường, chiều hướng ra ngoài.', matchId: 'dau_tren_tuong' },
+                        { id: 'force_n2', text: 'Véc-tơ phản lực pháp tuyến N2: Có phương thẳng đứng vuông góc với mặt sàn, chiều hướng lên trên.', matchId: 'dau_duoi_san' },
+                        { id: 'force_fms', text: 'Véc-tơ lực ma sát nghỉ Fmsn: Có phương nằm ngang song song mặt sàn, chiều hướng lao về phía góc tường để ghim giữ chân thanh.', matchId: 'dau_duoi_san' },
+                        { id: 'force_p', text: 'Véc-tơ trọng lực của thanh P: Có phương thẳng đứng vuông góc mặt đất, chiều hướng từ trên xuống dưới.', matchId: 'trong_tam_thanh' }
+                    ],
+
+                    // Khai báo các biến tương tác động cho mô phỏng lượng giác Tab 3
+                    m_ladder: 20.0,       
+                    mu_friction: 0.40,   
+                    g_gravity: 10.0,     
+                    myChart: null,
+
+                    // Hệ thống ngân hàng câu hỏi ma trận bóc tách bẫy tư duy phản hồi 2x2 Tab 4
+                    quizData: [
+                        {
+                            id: 1, level: 'Nhận biết', type: 'choice',
+                            question: 'Một vật rắn tự do hoàn toàn ở trạng thái cân bằng tĩnh học đứng yên tổng quát khi thỏa mãn cùng lúc những điều kiện cơ học nào?',
+                            options: [
+                                { id: 'A', text: 'Chỉ cần tổng tất cả các lực tác dụng lên vật bằng không để vật không chuyển động tịnh tiến.', isCorrect: false, feedback: '<b>Lỗi thiếu điều kiện quay:</b> Tổng lực bằng không chỉ đảm bảo khối tâm của vật không tịnh tiến. Vật rắn là một khối không gian, nếu các lực lệch trục tác dụng thì vật vẫn sẽ bị quay tít quanh tâm, chưa thể cân bằng đứng yên tổng quát.' },
+                                { id: 'B', text: 'Hợp lực tác dụng lên vật bằng không và tổng moment lực tác dụng lên vật đối với một điểm bất kỳ chọn làm trục quay cũng phải bằng không.', isCorrect: true, feedback: '<b>Chính xác tuyệt đối!</b> Vật rắn muốn cân bằng tổng quát bắt buộc phải thỏa mãn đồng thời hai định luật tĩnh học: Chống dịch chuyển tịnh tiến ($ \\sum \\vec{F} = \\vec{0} $) và chống chuyển động quay tròn ($ \\sum M = 0 $).' },
+                                { id: 'C', text: 'Chỉ cần tổng các moment lực tác dụng lên vật rắn đối với trọng tâm bằng không để vật không quay.', isCorrect: false, feedback: '<b>Lỗi thiếu điều kiện tịnh tiến:</b> Tổng moment bằng không chỉ giữ vật không quay, nếu hợp lực tổng khác không thì vật rắn vẫn sẽ bị đẩy lao đi tịnh tiến thẳng băng.' },
+                                { id: 'D', text: 'Trọng lượng cơ thể của vật rắn bắt buộc phải bằng không để triệt tiêu trường hấp dẫn.', isCorrect: false, feedback: '<b>Lỗi suy luận phi vật lý:</b> Vật rắn luôn chịu lực hút hấp dẫn của Trái Đất trong thực tế, điều kiện cân bằng là hệ phản lực của môi trường đỡ được trọng lượng đó chứ không phải triệt tiêu khối lượng.' }
+                            ],
+                            selectedOption: null
+                        },
+                        {
+                            id: 2, level: 'Thông hiểu', type: 'choice',
+                            question: 'Khi áp dụng phương trình điều kiện cân bằng moment ($ \\sum M = 0 $) cho một vật rắn tự do đứng yên (ví dụ thanh cứng dựng nghiêng tựa tường), tại sao chúng ta lại có quyền tự do lựa chọn một điểm bất kỳ trên thanh để làm trục quay giả định?',
+                            options: [
+                                { id: 'A', text: 'Bắt buộc phải chọn điểm tiếp xúc ở chân thanh vì nơi đó có lực ma sát giữ thanh cố định thực tế.', isCorrect: false, feedback: '<b>Lỗi ngộ nhận trục quay thực tế:</b> Vật rắn tự do cân bằng không có bản lề cố định. Do đó, bạn không bị ràng buộc phải chọn chân thanh.' },
+                                { id: 'B', text: 'Vì vật đang đứng yên hoàn toàn nên nó không quay quanh bất kỳ một điểm nào trong không gian, dẫn đến tổng moment đối với một điểm bất kỳ đều bằng không tuyệt đối. Chọn điểm thông minh là để triệt tiêu các ẩn số lực chưa biết.', isCorrect: true, feedback: '<b>Tuyệt vời! Bạn có tư duy toán lý sư phạm cực sắc bén:</b> Bản chất của trạng thái đứng yên là thanh không quay quanh bất cứ điểm nào. Do đó, tổng moment đối với đầu thanh, chân thanh hay trọng tâm đều phải bằng không. Việc chọn điểm có nhiều lực lạ đi qua (như chân thanh có cả $N_2$ và $F_{msn}$) sẽ làm cánh tay đòn của chúng bằng 0, giúp triệt tiêu ẩn số và giải hệ phương trình nhanh nhất.' },
+                                { id: 'C', text: 'Vì moment lực của Trọng lực tác dụng vào mọi điểm trên thanh đòn luôn luôn bằng hằng số hằng định.', isCorrect: false, feedback: '<b>Lỗi sai biểu thức moment:</b> Cánh tay đòn thay đổi khi bạn đổi vị trí chọn trục quay, do đó moment của từng lực đơn lẻ sẽ thay đổi, chỉ có tổng moment của hệ lực là luôn bằng không.' },
+                                { id: 'D', text: 'Vì bức tường thẳng đứng hoàn toàn nhẵn bóng nên không sinh ra tác dụng làm quay thanh phẳng.', isCorrect: false, feedback: '<b>Lỗi lập luận sai lệch:</b> Phản lực tường $N_1$ phương nằm ngang vẫn có cánh tay đòn so với chân thanh và vẫn tạo xu hướng làm quay thanh xuôi chiều kim đồng hồ.' }
+                            ],
+                            selectedOption: null
+                        },
+                        {
+                            id: 3, level: 'Vận dụng', type: 'choice',
+                            question: 'Một thanh cứng đồng chất có khối lượng $6\\text{ kg}$ nằm cân bằng tĩnh đứng yên nghiêng một góc $45^\\circ$ tựa đầu trên vào bức tường thẳng đứng nhẵn bóng và đầu dưới đặt trên mặt sàn nằm ngang thô nhám. Lấy gia tốc trọng trường $g = 10\\text{ m/s}^2$. Hãy tính độ lớn của lực ma sát nghỉ do mặt sàn tác dụng vào chân thanh để giữ nó không bị trượt ngã?',
+                            options: [
+                                { id: 'A', text: '$60\\text{ N}$', isCorrect: false, feedback: '<b>Lỗi nhầm sang phản lực sàn:</b> Giá trị $60\\text{ N}$ bằng đúng trọng lượng vật $P = m \\cdot g$, theo phương thẳng đứng nó cân bằng với phản lực pháp tuyến pháp tuyến $N_2$, không phải lực ma sát nằm ngang.' },
+                                { id: 'B', text: '$30\\text{ N}$', isCorrect: true, feedback: '<b>Rất chính xác! Bạn khai triển hệ phương trình rất chuẩn:</b><br>1. Phản lực sàn thẳng đứng: $N_2 = P = mg = 60\\text{ N}$.<br>2. Chọn chân thanh làm trục quay tạm thời, phương trình moment lực: $P \\cdot (L/2) \\cdot \\cos(45^\\circ) = N_1 \\cdot L \\cdot \\sin(45^\\circ) \\Rightarrow N_1 = \\frac{mg}{2 \\cdot \\tan(45^\\circ)} = \\frac{60}{2 \\cdot 1} = 30\\text{ N}$.<br>3. Theo phương ngang cân bằng: Lực ma sát nghỉ $F_{msn} = N_1 = 30\\text{ N}$.' },
+                                { id: 'C', text: '$15\\text{ N}$', isCorrect: false, feedback: '<b>Lỗi chia sai hệ số:</b> Hãy kiểm tra lại phép tính toán lượng giác ở mẫu số. Kết quả lực ma sát nghỉ bắt buộc phải đạt trị số $30\\text{ N}$ mới giữ được thanh.' },
+                                { id: 'D', text: '$0\\text{ N}$ vì thanh đang đứng yên bất động nên lực ma sát nghỉ chưa xuất hiện.', isCorrect: false, feedback: '<b>Lỗi triệt tiêu lực giữ chân:</b> Nếu lực ma sát bằng không, phản lực nằm ngang của tường $N_1$ sẽ đẩy chân thanh trượt dạt ra ngoài ngay lập tức. Lực ma sát nghỉ bắt buộc phải tồn tại để ghim giữ chân thanh.' }
+                            ],
+                            selectedOption: null
+                        },
+                        {
+                            id: 4, level: 'Vận dụng cao', type: 'input',
+                            question: 'Một chiếc thang phẳng đồng chất đặt nằm yên tựa vào bức tường thẳng đứng nhẵn bóng, đầu dưới đặt trên sàn nhà nằm ngang thô nhám có hệ số ma sát nghỉ giữa chân thang và sàn là $\\mu = 0,50$. Hãy tính toán giá trị của góc nghiêng nhỏ nhất $\\alpha_{\\min}$ (Đơn vị: độ) giữa thanh và mặt sàn nằm ngang sao cho chiếc thang vẫn đứng vững ổn định và không bị trượt đổ sụp? <br><span class="text-sm text-red-600 mt-2 block italic">*Lưu ý: Kết quả phải định dạng chính xác 4 ký tự, bao gồm cả dấu phẩy làm tròn số học thập phân (Ví dụ: 45,0 hoặc 60,0).*</span>',
+                            correctAnswer: '45,0',
+                            feedbackSuccess: '🎉 <b>Biện chứng bất đẳng thức tĩnh học quá đỉnh cao! Bạn đã chinh phục hoàn hảo bài toán giới hạn đổ sụp của vật rắn:</b><br>1. Phương trình phản lực cơ sở: $N_2 = m \\cdot g$ và lực ma sát thực tế cần: $F_{msn} = N_1 = \\frac{m \\cdot g}{2 \\cdot \\tan\\alpha}$.<br>2. Thiết lập điều kiện không trượt đổ: Lực ma sát cần thiết phải nhỏ hơn hoặc bằng ngưỡng ma sát nghỉ cực đại sàn có thể cấp: $F_{msn} \\le \\mu \\cdot N_2 \\Rightarrow \\frac{m \\cdot g}{2 \\cdot \\tan\\alpha} \\le \\mu \\cdot (m \\cdot g)$.<br>3. Rút gọn triệt tiêu trọng lượng hai vế: $\\frac{1}{2 \\cdot \\tan\\alpha} \\le \\mu \\Rightarrow \\tan\\alpha \\ge \\frac{1}{2 \\cdot \\mu}$. Thay giá trị hệ số $\\mu = 0,50 \\Rightarrow \\tan\\alpha \\ge \\frac{1}{2 \\cdot 0,50} = 1 \\Rightarrow \\alpha \\ge 45^\\circ$. Vậy góc nghiêng nhỏ nhất là $45^\\circ$. Định dạng cấu trúc chuỗi chuẩn 4 ký tự là <b>45,0</b>.',
+                            feedbackError: '💡 <b>Hướng dẫn lập luận bất đẳng thức giới hạn ma sát lượng giác:</b><br>1. Bước 1: Từ quy tắc moment và hình học phẳng, ta rút ra công thức lực ma sát ghim chân thanh: $F_{msn} = \\frac{m \\cdot g}{2 \\cdot \\tan\\alpha}$.<br>2. Bước 2: Thiết lập bất phương trình giới hạn cơ học: $F_{msn} \\le \\mu \\cdot m \\cdot g \\Rightarrow \\tan\\alpha \\ge \\frac{1}{2 \\cdot \\mu}$.<br>3. Bước 3: Thế giá trị hệ số ma sát đề bài cho $\\mu = 0,50$ vào giải tìm góc $\\alpha$. Ta thu được kết quả tròn trịa bằng 45 độ. Vì quy tắc phần mềm bắt buộc định dạng chuỗi gồm chính xác 4 ký tự chữ số nên Thầy/Cô hãy bảo học sinh gõ thêm phần thập phân là "45,0" nhé. Hãy nhập lại và kiểm tra.',
+                            studentAnswer: '',
+                            isAnswered: false,
+                            isCorrect: false
+                        }
+                    ]
+                }
+            },
+            mounted() {
+                this.initChart();
+                this.triggerMathJax();
+            },
+            methods: {
+                // Xử lý đổi giữa các Tab mượt mà tích hợp tự động kích hoạt loại bỏ lỗi hiển thị công thức
+                switchTab(tabId) {
+                    this.currentTab = tabId;
+                    this.triggerMathJax();
+                    if (tabId === 'tab3' && this.myChart) {
+                        this.$nextTick(() => {
+                            this.myChart.resize(); // Khắc phục lỗi co cóp giao diện đồ thị Chart.js khi sử dụng v-show
+                        });
+                    }
+                },
+                // Gọi MathJax kết xuất lại toàn bộ các ký tự véc-tơ động
+                triggerMathJax() {
+                    this.$nextTick(() => {
+                        if (window.MathJax && window.MathJax.typesetPromise) {
+                            window.MathJax.typesetPromise().catch((err) => console.log('MathJax Error: ', err));
+                        }
+                    });
+                },
+                // Xác định màu sắc giao diện ô thả dựa theo tính đúng đắn logic của thao tác kéo thả
+                getZoneColor(zone) {
+                    if (zone.items.length === 0) return 'border-gray-300 bg-slate-50';
+                    const isAllCorrect = zone.items.every(item => item.matchId === zone.id);
+                    return isAllCorrect ? 'bg-green-100 border-green-500 text-green-950' : 'bg-red-100 border-red-500 text-red-950';
+                },
+                // Thuật toán quét lượng giác tính toán hai đường cong đồ thị lực ma sát
+                generateChartData() {
+                    const labels = [];
+                    const maxFrictionData = [];
+                    const reqFrictionData = [];
+
+                    const n2 = this.m_ladder * this.g_gravity;
+                    const f_msn_max = this.mu_friction * n2;
+
+                    // Quét góc độ hạ dần từ 75 độ về 15 độ để vẽ toàn dải đường cong
+                    for (let angleDeg = 75; angleDeg >= 15; angleDeg -= 5) {
+                        labels.push(angleDeg + '°');
+                        const angleRad = (angleDeg * Math.PI) / 180;
+                        
+                        maxFrictionData.push(f_msn_max.toFixed(1));
+                        
+                        // Fmsn = mg / (2 * tan(alpha))
+                        const f_msn_req = (this.m_ladder * this.g_gravity) / (2 * Math.tan(angleRad));
+                        reqFrictionData.push(f_msn_req.toFixed(1));
+                    }
+                    return { labels, maxFrictionData, reqFrictionData };
+                },
+                // Khởi tạo đồ thị đường thẳng giới hạn phối hợp đường cong lượng giác
+                initChart() {
+                    const ctx = document.getElementById('ladderBalanceChart').getContext('2d');
+                    const { labels, maxFrictionData, reqFrictionData } = this.generateChartData();
+
+                    this.myChart = Vue.markRaw(new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [
+                                {
+                                    label: 'Ngưỡng giới hạn ma sát nghỉ tối đa sàn cấp Fmsn_max (N)',
+                                    data: maxFrictionData,
+                                    borderColor: 'rgba(239, 68, 68, 1)', 
+                                    backgroundColor: 'transparent',
+                                    borderWidth: 2,
+                                    borderDash: [5, 5],
+                                    pointRadius: 0
+                                },
+                                {
+                                    label: 'Lực ma sát thực tế bắt buộc phải có để chống trượt (N)',
+                                    data: reqFrictionData,
+                                    borderColor: 'rgba(126, 34, 206, 1)', 
+                                    backgroundColor: 'rgba(126, 34, 206, 0.05)',
+                                    borderWidth: 3,
+                                    fill: true,
+                                    tension: 0.1,
+                                    pointRadius: 4
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: { duration: 100, easing: 'linear' },
+                            scales: {
+                                x: { 
+                                    title: { display: true, text: 'Góc nghiêng alpha hợp bởi thân thanh và mặt sàn (độ)', font: { size: 14, weight: 'bold' } },
+                                    grid: { display: false }
+                                },
+                                y: { 
+                                    title: { display: true, text: 'Đường cong cường độ lực ma sát (N)', font: { size: 14, weight: 'bold' } },
+                                    min: 0,
+                                    max: 500 // Phù hợp tải cực đại 50kg * 10 / (2 * tan15) ~ 930N nhưng khống chế 500N để xem rõ điểm giao nhau cắt
+                                }
+                            },
+                            plugins: {
+                                legend: { position: 'top', labels: { font: { size: 13, weight: 'bold' } } }
+                            }
+                        }
+                    }));
+                },
+                // Làm mới đồ thị real-time khi học sinh thay đổi khối lượng hoặc ma sát mặt sàn
+                updateChartRealtime() {
+                    if (!this.myChart) return;
+                    const { maxFrictionData, reqFrictionData } = this.generateChartData();
+                    this.myChart.data.datasets[0].data = maxFrictionData;
+                    this.myChart.data.datasets[1].data = reqFrictionData;
+                    this.myChart.update();
+                },
+                // Xử lý sự kiện học sinh chọn phương án trắc nghiệm lựa chọn
+                selectOption(q, option) {
+                    q.selectedOption = option;
+                    this.triggerMathJax(); 
+                },
+                // Định cấu hình lớp màu sắc CSS dựa theo tính đúng đắn của phương án được chọn
+                getOptionClass(q, option) {
+                    if (!q.selectedOption) return 'bg-slate-50 border-gray-200 hover:border-purple-400 hover:bg-purple-50';
+                    if (q.selectedOption.id === option.id) {
+                        return option.isCorrect ? 'bg-green-100 border-green-600 text-green-900 shadow-md font-medium' : 'bg-red-100 border-red-600 text-red-900 shadow-md font-medium';
+                    }
+                    return 'bg-slate-50 border-gray-200 opacity-50';
+                },
+                // Chấm điểm tự động và bóc tách bẫy tư duy dạng câu hỏi nhập chuỗi số làm tròn thập phân
+                checkInput(q) {
+                    q.isAnswered = true;
+                    const processedAns = q.studentAnswer.trim().replace('.', ',');
+                    q.isCorrect = (processedAns === q.correctAnswer);
+                    this.triggerMathJax();
+                }
+            },
+            updated() {
+                this.triggerMathJax();
+            }
+        });
+
+        app.component('draggable', vuedraggable);
+        app.mount('#app');
+    </script>
+</body>
+</html>
